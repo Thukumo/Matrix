@@ -11,26 +11,17 @@ kernel32 = ctypes.windll.kernel32
 handle = kernel32.GetStdHandle(-11)
 kernel32.SetConsoleMode(handle, MODE)
 
-def main(w, h, cap, capw, caph, fps, show=False):
-    global filename, start
-    #print(w, h)
+def main(w, h, cap, capw, caph, fps, skiplate=60, show=False):
+    global filename, start, t
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
-    #print(capw/caph)
-    #print(w/capw, h/caph)
     if True:
         if w/capw < h/caph:
-            #print("h")
             h = int(caph*w/capw)
         else:
-            #print("w")
             w = int(capw*h/caph)
-    #print(capw, caph)
-    #print(w/h)
-    #print(w, h)
     start = 0
     skip = False
     curtime = time.perf_counter()
-    #print(fps)
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
         while True:
             curtime = time.perf_counter()
@@ -44,25 +35,28 @@ def main(w, h, cap, capw, caph, fps, show=False):
     else:
         for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             if i == 0:
-                #start = time.perf_counter()-2.7
                 start = time.perf_counter()
+                curtime = start
                 t.start()
             elif skip:
                 skip = False
                 #print("skipped")
                 continue
-            curtime = time.perf_counter()
             ret, frame = cap.read()
             if show:
                 cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                 cv2.waitKey(1)
             print(conv2txt(w, h, numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)))
             now = time.perf_counter()
-            if (i+1)/fps < now-start:
+            if (i+1)/fps < now-start or (i+1)%skiplate == 0:
                 skip = True
             else:
                 time.sleep(max(0, 1/fps-(now-curtime))) #なぜかたまにエラーでるからmax(0, 1/fps-(time.perf_counter()-curtime))にした
             curtime = time.perf_counter()
+            #if (i+1)/fps <= now-start:
+            #    skip = True
+            #else:
+            #    time.sleep(max(0, (i+1)/fps-(now-start)))
 
 def audio_player(clip):
     global start
@@ -80,6 +74,7 @@ def conv2txt(w, h, frame_array): #numbaのために分ける。あんま速度�
             text += char4im[int(frame_array[i, j]*(len(char4im))/256)] #frame_array[i, j]の値は255がMAX
         frame_txt.append(text)
     return "\n".join(frame_txt)
+
 def exitter(hoge, fuga):
     global cap
     cap.release()
@@ -92,22 +87,36 @@ if len(sys.argv) == 2:
     t = Thread(target=audio_player, args=[VideoFileClip(filename)])
 elif len(sys.argv) == 1:
     cap = cv2.VideoCapture(0)
+elif len(sys.argv) == 3:
+    if sys.argv[1].startswith("-s"):
+        skiplate = int(sys.argv[1][2:])
+        filename = sys.argv[2]
+    elif sys.argv[2].startswith("-s"):
+        skiplate = int(sys.argv[2][2:])
+        filename = sys.argv[1]
+    else:
+        print("引数が正しくありません")
+        exit()
+    cap = cv2.VideoCapture(filename)
+    t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+else:
+    print("引数の数が正しくありません")
+    exit()
 if not cap.isOpened():
     print("OpenCVの実行に失敗しました")
     exit()
+signal.signal(signal.SIGINT, exitter)
 terminal_size = shutil.get_terminal_size()
 height = terminal_size.lines
 width = terminal_size.columns
-fps = 40
 fps = cap.get(cv2.CAP_PROP_FPS)
-#fps *= 1.05
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-signal.signal(signal.SIGINT, exitter)
-main(width, height, cap, capw, caph, fps, show=False)
+time.sleep(1) #読み込みをちょっと待ってみる
+main(width, height, cap, capw, caph, fps, skiplate, show=False)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-os._exit(0)
+sys.exit(0)
