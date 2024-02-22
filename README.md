@@ -5,6 +5,6 @@ Matrixのあれ(ターミナルを流れ落ちる文字で映像を表現)<br>
 ```
 pip install -r requirements.txt
 ```
-#実行
+# 実行
 ```
 python matrix.py
