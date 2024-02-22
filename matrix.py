@@ -11,7 +11,7 @@ kernel32 = ctypes.windll.kernel32
 handle = kernel32.GetStdHandle(-11)
 kernel32.SetConsoleMode(handle, MODE)
 
-def main(w, h, cap, capw, caph, fps, skiplate=60, show=False):
+def main(w, h, cap, capw, caph, fps, skiplate, show=False):
     global filename, start, t
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
     if True:
@@ -81,6 +81,7 @@ def exitter(hoge, fuga):
     cv2.destroyAllWindows()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
+skiplate = 60
 if len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
@@ -115,7 +116,8 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 time.sleep(1) #読み込みをちょっと待ってみる
-main(width, height, cap, capw, caph, fps, skiplate, show=False)
+if def skiplate:
+main(width, height, cap, capw, caph, fps, show=False)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
