@@ -13,24 +13,24 @@ kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, show=False):
     global filename, start
-    print(w, h)
-    print(capw/caph)
-    print(w/capw, h/caph)
+    #print(w, h)
+    capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
+    #print(capw/caph)
+    #print(w/capw, h/caph)
     if True:
         if w/capw < h/caph:
-            print("h")
+            #print("h")
             h = int(caph*w/capw)
         else:
-            print("w")
+            #print("w")
             w = int(capw*h/caph)
-    print(capw, caph)
-    print(w/h)
-    print(w, h)
-    w = int(w*2) #気にしない
+    #print(capw, caph)
+    #print(w/h)
+    #print(w, h)
     start = 0
     skip = False
     curtime = time.perf_counter()
-    print(fps)
+    #print(fps)
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
         while True:
             curtime = time.perf_counter()
@@ -38,25 +38,25 @@ def main(w, h, cap, capw, caph, fps, show=False):
             if show:
                 cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                 cv2.waitKey(1)
-            frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
-            print("\n".join(conv2txt(w, h, frame_array)))
+            print(f"\033[32m{conv2txt(w, h, numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8))}\033[00m")
             time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
             curtime = time.perf_counter()
     else:
         for i in range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             if i == 0:
-                start = time.perf_counter()-2.7
+                #start = time.perf_counter()-2.7
+                start = time.perf_counter()
                 t.start()
             elif skip:
                 skip = False
-                print("skipped")
+                #print("skipped")
                 continue
             curtime = time.perf_counter()
             ret, frame = cap.read()
             if show:
                 cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                 cv2.waitKey(1)
-            print("\n".join(conv2txt(w, h, numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8))))
+            print(conv2txt(w, h, numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)))
             now = time.perf_counter()
             if (i+1)/fps < now-start:
                 skip = True
@@ -69,9 +69,9 @@ def audio_player(clip):
     start = time.perf_counter()
     clip.audio.preview()
 
-#@numba.njit(cache=True)
+@numba.njit(cache=True)
 def conv2txt(w, h, frame_array): #numbaのために分ける。あんま速度変わってない？
-    char4im = [" ", ".", "-", ":", "+", "*", "#" ,"%", "@"]
+    char4im = [" ", ".", "-", ":", "+", "|", "*", "#" ,"%", "&", "@"]
     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
     frame_txt = []
     for i in range(h):
@@ -79,7 +79,7 @@ def conv2txt(w, h, frame_array): #numbaのために分ける。あんま速度�
         for j in range(w):
             text += char4im[int(frame_array[i, j]*(len(char4im))/256)] #frame_array[i, j]の値は255がMAX
         frame_txt.append(text)
-    return frame_txt
+    return "\n".join(frame_txt)
 def exitter(hoge, fuga):
     global cap
     cap.release()
