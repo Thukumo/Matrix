@@ -85,10 +85,10 @@ def exitter(hoge, fuga):
     cv2.destroyAllWindows()
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
-if sys.argc == 2:
+if len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
-elif sys.argc == 1:
+elif len(sys.argv) == 1:
     cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("OpenCVの実行に失敗しました")
