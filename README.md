@@ -1,7 +1,7 @@
 # Matrix
 Matrixのあれ(ターミナルを流れ落ちる文字で映像を表現)<br>
 を作ろうとして挫折したもの
-#準備
+# 準備
 ```
 pip install -r requirements.txt
 ```
