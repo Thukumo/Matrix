@@ -116,8 +116,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 time.sleep(1) #読み込みをちょっと待ってみる
-if def skiplate:
-main(width, height, cap, capw, caph, fps, show=False)
+main(width, height, cap, capw, caph, fps, skiplate, show=False)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
