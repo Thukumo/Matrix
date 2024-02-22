@@ -88,6 +88,7 @@ def exitter(hoge, fuga):
 if len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
+    t = Thread(target=audio_player, args=[VideoFileClip(filename)])
 elif len(sys.argv) == 1:
     cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -97,7 +98,6 @@ terminal_size = shutil.get_terminal_size()
 height = terminal_size.lines
 width = terminal_size.columns
 fps = 40
-t = Thread(target=audio_player, args=[VideoFileClip(filename)])
 fps = cap.get(cv2.CAP_PROP_FPS)
 #fps *= 1.05
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
