@@ -66,9 +66,10 @@ def main(w, h, cap, capw, caph, fps, show=False):
 
 def audio_player(clip):
     global start
+    start = time.perf_counter()
     clip.audio.preview()
 
-@numba.njit(cache=True)
+#@numba.njit(cache=True)
 def conv2txt(w, h, frame_array): #numbaのために分ける。あんま速度変わってない？
     char4im = [" ", ".", "-", ":", "+", "*", "#" ,"%", "@"]
     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
