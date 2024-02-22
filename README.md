@@ -12,10 +12,12 @@ pip install -r requirements.txt
 ```
 python matrix.py
 ```
-動画ファイル(mp4に対応)を再生したい場合
+動画ファイルを再生したい場合
 ```
 python matrix.py {動画ファイルのパス}
 ```
+動画ファイルは何に対応してるのかあんまわかってないです(mp4とwebmは行けた)<br>
+バックグラウンドで再生させるとだんだん映像が遅れていきます(なぜ？)
 # 既知の不具合
 ~~・映像と音がズレる~~<br>
 https://github.com/Thukumo/Matrix/commit/5d2ff69dafd740740dcc4d04fd7616b3d8e04333 でだいぶましになったかも<br>
