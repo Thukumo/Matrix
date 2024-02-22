@@ -17,6 +17,7 @@ python matrix.py
 python matrix.py {動画ファイルのパス}
 ```
 # 既知の不具合
-映像と音がズレる
-映像の最後数十フレームくらいが描画されない
-フレームスキップがあんまり仕事しない
+~~・映像と音がズレる~~<br>
+https://github.com/Thukumo/Matrix/commit/5d2ff69dafd740740dcc4d04fd7616b3d8e04333 でだいぶましになったかも<br>
+・映像の最後数十フレームくらいが描画されない<br>
+・フレームスキップがあんまり仕事しない<br>
