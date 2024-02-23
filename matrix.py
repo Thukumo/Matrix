@@ -137,7 +137,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
                 else:
-                    time.sleep((i+1)/fps-(time.perf_counter()-start))
+                    time.sleep(max(0, (i+1)/fps-(time.perf_counter()-start)))
 
 def audio_player(clip):
     global start
