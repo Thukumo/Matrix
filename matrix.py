@@ -2,7 +2,7 @@ import cv2, time, shutil, signal, os, numpy, sys
 from threading import Thread
 from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, moviepy
-if os.name == "nt":
+if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
     ENABLE_PROCESSED_OUTPUT = 0x0001
     ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002
@@ -14,20 +14,22 @@ if os.name == "nt":
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     global filename, start, t, char4im, writing, color, flush
-    capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
+    if 'WT_SESSION' in os.environ and color:
+        capw = capw*2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
     if w/capw < h/caph:
         h = int(caph*w/capw)
     else:
         w = int(capw*h/caph)
     start = 0
     skip = False
-    if color:
+    if color and False: #必要なさそうなので無効化
         color = False
         if os.name == "nt":
             color = True
         else:
             print("実行環境がWindows NT系でないためモノクロでの出力を行います。")
-            time.sleep(3)
+            #time.sleep(3)
+            color = True
     curtime = time.perf_counter()
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
         i = 0
@@ -50,24 +52,22 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     writing = True
                     if i%flushlate == 0 and flush:
                         print("\033c", end="")
-                    frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
-                    frame_txt = []
+                    frame_txt = ""
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            #text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
                             text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
-                        frame_txt.append(text)
-                    print("\n".join(frame_txt)+"\033[0m")
+                        frame_txt += text+"\n"
+                    print(frame_txt+"\033[0m")
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
-                    frame_txt = []
+                    frame_txt = ""
                     for j in range(h):
                         text = ""
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
-                        frame_txt.append(text)
-                    print("\n".join(frame_txt))
+                        frame_txt += text+"\n"
+                    print(frame_txt)
                 time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
                 curtime = time.perf_counter()
     else:
@@ -117,24 +117,22 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     writing = True
                     if (i+1)%flushlate == 0 and flush:
                         print("\033c", end="")
-                    frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
-                    frame_txt = []
+                    frame_txt = ""
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            #text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
                             text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
-                        frame_txt.append(text)
-                    print("\n".join(frame_txt)+"\033[0m")
+                        frame_txt += text+"\n"
+                    print(frame_txt+"\033[0m")
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
-                    frame_txt = []
+                    frame_txt = ""
                     for j in range(h):
                         text = ""
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
-                        frame_txt.append(text)
-                    print("\n".join(frame_txt))
+                        frame_txt += text+"\n"
+                    print(frame_txt)
                 writing = False
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
