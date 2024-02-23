@@ -1,15 +1,16 @@
-import cv2, time, shutil, signal, os, numpy, ctypes, sys
+import cv2, time, shutil, signal, os, numpy, sys
 from threading import Thread
 from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, moviepy
-ENABLE_PROCESSED_OUTPUT = 0x0001
-ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002
-ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-MODE = ENABLE_PROCESSED_OUTPUT + ENABLE_WRAP_AT_EOL_OUTPUT + ENABLE_VIRTUAL_TERMINAL_PROCESSING
- 
-kernel32 = ctypes.windll.kernel32
-handle = kernel32.GetStdHandle(-11)
-kernel32.SetConsoleMode(handle, MODE)
+if os.name == "nt":
+    import ctypes
+    ENABLE_PROCESSED_OUTPUT = 0x0001
+    ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+    MODE = ENABLE_PROCESSED_OUTPUT + ENABLE_WRAP_AT_EOL_OUTPUT + ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    kernel32 = ctypes.windll.kernel32
+    handle = kernel32.GetStdHandle(-11)
+    kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, show=False):
     global filename, start, t, char4im
@@ -22,6 +23,12 @@ def main(w, h, cap, capw, caph, fps, show=False):
     skip = False
     curtime = time.perf_counter()
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
+        color = False
+        if os.name == "nt":
+            color = True
+        else:
+            print("実行環境がWindows NT系でないため緑色での出力を行いません。")
+            time.sleep(3)
         while True:
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
@@ -44,7 +51,10 @@ def main(w, h, cap, capw, caph, fps, show=False):
                         text += char4im[int(frame_array[i, j]*(len(char4im))/256)] #frame_array[i, j]の値は255がMAX
                     frame_txt.append(text)
                 frame_txt = "\n".join(frame_txt)
-                print(f"\033[32m"+frame_txt+"\033[00m")
+                if color:
+                    print(f"\033[32m"+frame_txt+"\033[00m")
+                else:
+                    print(frame_txt)
                 time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
                 curtime = time.perf_counter()
     else:
@@ -120,14 +130,20 @@ char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダ�
 if len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
-    t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+    try:
+        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+    except OSError:
+        print("ファイルが開けませんでした。")
+        print("ファイル名が正しいか確認してください。")
+        exit()
 elif len(sys.argv) == 1:
     cap = cv2.VideoCapture(0)
 else:
     print("引数の数が正しくありません")
     exit()
 if not cap.isOpened():
-    print("OpenCVの実行に失敗しました")
+    print("OpenCVの実行に失敗しました。")
+    print("カメラが正しく接続されているか確認してください。")
     exit()
 signal.signal(signal.SIGINT, exitter)
 terminal_size = shutil.get_terminal_size()
