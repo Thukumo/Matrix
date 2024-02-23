@@ -30,8 +30,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             time.sleep(3)
     curtime = time.perf_counter()
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
-
+        i = 0
         while True:
+            i += 1
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
             h = terminal_size.lines
@@ -45,13 +46,25 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
-                frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
-                frame_txt = []
-                for i in range(h):
-                    text = ""
-                    for j in range(w):
-                        text += char4im[int(frame_array[i, j]*(len(char4im))/256)] #frame_array[i, j]の値は255がMAX
-                    frame_txt.append(text)
+                if color:
+                    writing = True
+                    if i%flushlate == 0:
+                        print("\033c", end="")
+                    frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
+                    frame_txt = []
+                    for j in range(h):
+                        text = ""
+                        for k in range(w):
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
+                        frame_txt.append(text)
+                else:
+                    frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
+                    frame_txt = []
+                    for j in range(h):
+                        text = ""
+                        for k in range(w):
+                            text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
+                        frame_txt.append(text)
                 frame_txt = "\n".join(frame_txt)
                 if color:
                     print(f"\033[32m"+frame_txt+"\033[00m")
@@ -111,8 +124,6 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         for k in range(w):
                             text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
                         frame_txt.append(text)
-                    print("\n".join(frame_txt))
-                    writing = False
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
                     frame_txt = []
@@ -121,7 +132,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
                         frame_txt.append(text)
-                    print("\n".join(frame_txt))
+                print("\n".join(frame_txt))
+                writing = False
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
                 else:
@@ -148,32 +160,23 @@ char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダ�
 writing = False
 color = True
 flushlate = 30
-if len(sys.argv) == 4:
-    for i in sys.argv:
-        if i.startswith("-f"):
-            flushlate = int(i[2:])
-        elif i.startswith("-m"):
-            color = False
-        else:
-            filename = i
-    cap = cv2.VideoCapture(filename)
-    try:
-        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
-    except OSError:
-        print("ファイルが開けませんでした。")
-        print("ファイル名が正しいか確認してください。")
-        exit()
 if len(sys.argv) == 3:
+    cam = False
     if sys.argv[1].startswith("-m") or sys.argv[2].startswith("-m"):
-        filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
-        color = False
+        if (sys.argv[1].startswith("-m") and sys.argv[2].startswith("-f")) or (sys.argv[1].startswith("-f") and sys.argv[2].startswith("-m")):
+            print("-fと-mは同時に指定できません")
+            exit()
+        else:
+            filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
+            cap = cv2.VideoCapture(filename)
+            color = False
     elif sys.argv[1].startswith("-f") or sys.argv[2].startswith("-f"):
         flushlate = int(sys.argv[1][2:]) if sys.argv[1].startswith("-f") else int(sys.argv[2][2:])
         filename = sys.argv[2] if sys.argv[1].startswith("-f") else sys.argv[1]
+        cap = cv2.VideoCapture(filename)
     else:
         print("引数が正しくありません")
         exit()
-    cap = cv2.VideoCapture(filename)
     try:
         t = Thread(target=audio_player, args=[VideoFileClip(filename)])
     except OSError:
@@ -181,14 +184,21 @@ if len(sys.argv) == 3:
         print("ファイル名が正しいか確認してください。")
         exit()
 elif len(sys.argv) == 2:
-    filename = sys.argv[1]
-    cap = cv2.VideoCapture(filename)
-    try:
-        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
-    except OSError:
-        print("ファイルが開けませんでした。")
-        print("ファイル名が正しいか確認してください。")
-        exit()
+    if sys.argv[1].startswith("-f"):
+        flushlate = int(sys.argv[1][2:])
+        cap = cv2.VideoCapture(0)
+    elif sys.argv[1].startswith("-m"):
+        color = False
+        cap = cv2.VideoCapture(0)
+    else:
+        filename = sys.argv[1]
+        cap = cv2.VideoCapture(filename)
+        try:
+            t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+        except OSError:
+            print("ファイルが開けませんでした。")
+            print("ファイル名が正しいか確認してください。")
+            exit()
 elif len(sys.argv) == 1:
     cap = cv2.VideoCapture(0)
 else:
