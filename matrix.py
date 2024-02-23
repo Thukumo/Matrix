@@ -13,7 +13,7 @@ if os.name == "nt":
     kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
-    global filename, start, t, char4im, writing, color
+    global filename, start, t, char4im, writing, color, flush
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
     if w/capw < h/caph:
         h = int(caph*w/capw)
@@ -48,15 +48,16 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
                     writing = True
-                    if i%flushlate == 0:
+                    if i%flushlate == 0 and flush:
                         print("\033c", end="")
                     frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
                     frame_txt = []
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
                         frame_txt.append(text)
+                    print("\n".join(frame_txt)+"\033[0m")
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
                     frame_txt = []
@@ -65,11 +66,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
                         frame_txt.append(text)
-                frame_txt = "\n".join(frame_txt)
-                if color:
-                    print(f"\033[32m"+frame_txt+"\033[00m")
-                else:
-                    print(frame_txt)
+                    print("\n".join(frame_txt))
                 time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
                 curtime = time.perf_counter()
     else:
@@ -110,20 +107,23 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             ret, frame = cap.read()
             if ret:
                 if show:
-                    cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
+                    #cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
+                    bairitu = 3
+                    cv2.imshow("frame", cv2.resize(frame, (w*bairitu, h*2*bairitu)))
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
                     writing = True
-                    if (i+1)%flushlate == 0:
+                    if (i+1)%flushlate == 0 and flush:
                         print("\033c", end="")
                     frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
                     frame_txt = []
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
                         frame_txt.append(text)
+                    print("\n".join(frame_txt)+"\033[0m")
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
                     frame_txt = []
@@ -132,7 +132,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
                         frame_txt.append(text)
-                print("\n".join(frame_txt))
+                    print("\n".join(frame_txt))
                 writing = False
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
@@ -159,6 +159,7 @@ char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダ�
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
 color = True
+flush = False
 flushlate = 30
 if len(sys.argv) == 3:
     cam = False
@@ -171,6 +172,7 @@ if len(sys.argv) == 3:
             cap = cv2.VideoCapture(filename)
             color = False
     elif sys.argv[1].startswith("-f") or sys.argv[2].startswith("-f"):
+        flush = True
         flushlate = int(sys.argv[1][2:]) if sys.argv[1].startswith("-f") else int(sys.argv[2][2:])
         filename = sys.argv[2] if sys.argv[1].startswith("-f") else sys.argv[1]
         cap = cv2.VideoCapture(filename)
@@ -185,6 +187,7 @@ if len(sys.argv) == 3:
         exit()
 elif len(sys.argv) == 2:
     if sys.argv[1].startswith("-f"):
+        flush = True
         flushlate = int(sys.argv[1][2:])
         cap = cv2.VideoCapture(0)
     elif sys.argv[1].startswith("-m"):
@@ -217,7 +220,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, flushlate, False)
+main(width, height, cap, capw, caph, fps, flushlate, True) 
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
