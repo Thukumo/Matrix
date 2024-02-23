@@ -11,7 +11,8 @@ Matrixのあれ(ターミナルを流れ落ちる文字で映像を表現)<br>
 pip install -r requirements.txt
 ```
 # 実行
-Windows Terminalよりもcmd.exeから実行したほうが映像の縦ブレが少ない気がします。<br>
+~~Windows Terminalよりもcmd.exeから実行したほうが映像の縦ブレが少ない気がします。~~<br>
+カラー出力の場合Windows Terminalのほうがまだましです。<br>
 カメラの映像を出力させたい場合
 ```
 python matrix.py
