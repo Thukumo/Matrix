@@ -13,7 +13,7 @@ if os.name == "nt":
     kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, show=False):
-    global filename, start, t, char4im, writing
+    global filename, start, t, char4im, writing, color
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
     if w/capw < h/caph:
         h = int(caph*w/capw)
@@ -21,12 +21,13 @@ def main(w, h, cap, capw, caph, fps, show=False):
         w = int(capw*h/caph)
     start = 0
     skip = False
-    color = False
-    if os.name == "nt":
-        color = True
-    else:
-        print("実行環境がWindows NT系でないためモノクロでの出力を行います。")
-        time.sleep(3)
+    if color:
+        color = False
+        if os.name == "nt":
+            color = True
+        else:
+            print("実行環境がWindows NT系でないためモノクロでの出力を行います。")
+            time.sleep(3)
     curtime = time.perf_counter()
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
 
@@ -134,19 +135,27 @@ def audio_player(clip):
     clip.audio.preview()
 
 def exitter(hoge, fuga):
-    global cap, writing
+    global cap, writing, color
     cap.release()
     cv2.destroyAllWindows()
-    while writing:
-        time.sleep(0.01)
-    print("\033[0m")
+    if color:
+        while writing:
+            time.sleep(0.01)
+        print("\033[0m")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
 
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
-if len(sys.argv) == 2:
+color = True
+if len(sys.argv) == 3:
+    if not sys.argv[1].startswith("-m") and not sys.argv[2].startswith("-m"):
+        print("引数の数が正しくありません")
+        exit()
+    filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
+    color = False
+elif len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
     try:
