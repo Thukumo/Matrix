@@ -12,7 +12,7 @@ if os.name == "nt":
     handle = kernel32.GetStdHandle(-11)
     kernel32.SetConsoleMode(handle, MODE)
 
-def main(w, h, cap, capw, caph, fps, show=False):
+def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     global filename, start, t, char4im, writing, color
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
     if w/capw < h/caph:
@@ -62,7 +62,6 @@ def main(w, h, cap, capw, caph, fps, show=False):
     else:
         start = time.perf_counter()
         i = 0
-        #curtime = start
         t.start()
         ret, frame = cap.read()
         if show:
@@ -88,7 +87,6 @@ def main(w, h, cap, capw, caph, fps, show=False):
                 skip = False
                 cap.read()
                 continue
-            #print("\033c", end="")
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
             h = terminal_size.lines
@@ -103,6 +101,9 @@ def main(w, h, cap, capw, caph, fps, show=False):
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
+                    writing = True
+                    if (i+1)%flushlate == 0:
+                        print("\033c", end="")
                     frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
                     frame_txt = []
                     for j in range(h):
@@ -110,8 +111,6 @@ def main(w, h, cap, capw, caph, fps, show=False):
                         for k in range(w):
                             text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
                         frame_txt.append(text)
-                    #os.system("cls")
-                    writing = True
                     print("\n".join(frame_txt))
                     writing = False
                 else:
@@ -148,11 +147,15 @@ char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダ�
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
 color = True
-if len(sys.argv) == 3:
-    if not sys.argv[1].startswith("-m") and not sys.argv[2].startswith("-m"):
-        print("引数の数が正しくありません")
-        exit()
-    filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
+flushlate = 30
+if len(sys.argv) == 4:
+    for i in sys.argv:
+        if i.startswith("-f"):
+            flushlate = int(i[2:])
+        elif i.startswith("-m"):
+            color = False
+        else:
+            filename = i
     cap = cv2.VideoCapture(filename)
     try:
         t = Thread(target=audio_player, args=[VideoFileClip(filename)])
@@ -160,7 +163,23 @@ if len(sys.argv) == 3:
         print("ファイルが開けませんでした。")
         print("ファイル名が正しいか確認してください。")
         exit()
-    color = False
+if len(sys.argv) == 3:
+    if sys.argv[1].startswith("-m") or sys.argv[2].startswith("-m"):
+        filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
+        color = False
+    elif sys.argv[1].startswith("-f") or sys.argv[2].startswith("-f"):
+        flushlate = int(sys.argv[1][2:]) if sys.argv[1].startswith("-f") else int(sys.argv[2][2:])
+        filename = sys.argv[2] if sys.argv[1].startswith("-f") else sys.argv[1]
+    else:
+        print("引数が正しくありません")
+        exit()
+    cap = cv2.VideoCapture(filename)
+    try:
+        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+    except OSError:
+        print("ファイルが開けませんでした。")
+        print("ファイル名が正しいか確認してください。")
+        exit()
 elif len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
@@ -188,7 +207,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, False)
+main(width, height, cap, capw, caph, fps, flushlate, False)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
