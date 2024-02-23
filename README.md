@@ -13,6 +13,7 @@ pip install -r requirements.txt
 # 実行
 ~~Windows Terminalよりもcmd.exeから実行したほうが映像の縦ブレが少ない気がします。~~<br>
 カラー出力の場合Windows Terminalのほうがまだましです。<br>
+モノクロでの出力を行いたい場合は-mオプションを付けてください。<br><br>
 カメラの映像を出力させたい場合
 ```
 python matrix.py
