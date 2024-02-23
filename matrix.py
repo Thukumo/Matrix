@@ -13,7 +13,7 @@ if os.name == "nt":
     kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, show=False):
-    global filename, start, t, char4im
+    global filename, start, t, char4im, writing
     capw = capw*2 #ターミナルのフォントの縦横比が2:1らしいので
     if w/capw < h/caph:
         h = int(caph*w/capw)
@@ -21,14 +21,15 @@ def main(w, h, cap, capw, caph, fps, show=False):
         w = int(capw*h/caph)
     start = 0
     skip = False
+    color = False
+    if os.name == "nt":
+        color = True
+    else:
+        print("実行環境がWindows NT系でないためモノクロでの出力を行います。")
+        time.sleep(3)
     curtime = time.perf_counter()
     if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) == -1:
-        color = False
-        if os.name == "nt":
-            color = True
-        else:
-            print("実行環境がWindows NT系でないため緑色での出力を行いません。")
-            time.sleep(3)
+
         while True:
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
@@ -99,14 +100,29 @@ def main(w, h, cap, capw, caph, fps, show=False):
                     cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
-                frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
-                frame_txt = []
-                for j in range(h):
-                    text = ""
-                    for k in range(w):
-                        text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
-                    frame_txt.append(text)
-                print("\n".join(frame_txt))
+                if color:
+                    frame_arrayg = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0] 
+                    frame_txt = []
+                    for j in range(h):
+                        text = ""
+                        for k in range(w):
+                            r = frame_array[j, k, 2]
+                            g = frame_array[j, k, 1]
+                            b = frame_array[j, k, 0]
+                            text += f"\033[38;2;{r};{g};{b}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
+                        frame_txt.append(text)
+                    writing = True
+                    print("\n".join(frame_txt))
+                    writing = False
+                else:
+                    frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
+                    frame_txt = []
+                    for j in range(h):
+                        text = ""
+                        for k in range(w):
+                            text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
+                        frame_txt.append(text)
+                    print("\n".join(frame_txt))
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
                 else:
@@ -118,15 +134,18 @@ def audio_player(clip):
     clip.audio.preview()
 
 def exitter(hoge, fuga):
-    global cap
+    global cap, writing
     cap.release()
     cv2.destroyAllWindows()
+    while writing:
+        time.sleep(0.01)
+    print("\033[0m")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
 
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
-
+writing = False
 if len(sys.argv) == 2:
     filename = sys.argv[1]
     cap = cv2.VideoCapture(filename)
