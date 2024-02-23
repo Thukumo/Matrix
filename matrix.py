@@ -55,7 +55,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
+                            #text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
                         frame_txt.append(text)
                     print("\n".join(frame_txt)+"\033[0m")
                 else:
@@ -121,7 +122,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
+                            #text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
                         frame_txt.append(text)
                     print("\n".join(frame_txt)+"\033[0m")
                 else:
@@ -220,7 +222,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, flushlate, False) 
+main(width, height, cap, capw, caph, fps, flushlate, True) 
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
