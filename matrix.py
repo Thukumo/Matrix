@@ -82,12 +82,13 @@ def main(w, h, cap, capw, caph, fps, show=False):
         if (i+1)/fps < now-start:
             skip = True
         else:
-            time.sleep(max(0, ((i+1)/fps-(now-start)))) #time.sleep(max(0, 1/fps-(now-curtime)))
+            time.sleep(max(0, ((i+1)/fps-(now-start))))
         for i in range(1, int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             if skip:
                 skip = False
                 cap.read()
                 continue
+            #print("\033c", end="")
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
             h = terminal_size.lines
@@ -107,11 +108,9 @@ def main(w, h, cap, capw, caph, fps, show=False):
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            r = frame_array[j, k, 2]
-                            g = frame_array[j, k, 1]
-                            b = frame_array[j, k, 0]
-                            text += f"\033[38;2;{r};{g};{b}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
+                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+char4im[int(frame_arrayg[j, k]*(len(char4im))/256)]+"\033[0m"
                         frame_txt.append(text)
+                    #os.system("cls")
                     writing = True
                     print("\n".join(frame_txt))
                     writing = False
