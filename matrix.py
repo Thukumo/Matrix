@@ -154,6 +154,13 @@ if len(sys.argv) == 3:
         print("引数の数が正しくありません")
         exit()
     filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
+    cap = cv2.VideoCapture(filename)
+    try:
+        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
+    except OSError:
+        print("ファイルが開けませんでした。")
+        print("ファイル名が正しいか確認してください。")
+        exit()
     color = False
 elif len(sys.argv) == 2:
     filename = sys.argv[1]
