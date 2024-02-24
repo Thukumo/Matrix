@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, sys
+import cv2, time, shutil, signal, os, numpy, sys, argparse
 from threading import Thread
 from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, moviepy
@@ -172,7 +172,7 @@ def exitter(hoge, fuga):
     cv2.destroyAllWindows()
     if color:
         try:
-            print("\033[0m")
+            print("\033[0m") #必要かわからないので念のため
         except RuntimeError:
             os._exit(0)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -184,57 +184,29 @@ writing = False
 color = True
 flush = False
 flushlate = 30
-if len(sys.argv) == 3:
-    cam = False
-    if sys.argv[1].startswith("-m") or sys.argv[2].startswith("-m"):
-        if (sys.argv[1].startswith("-m") and sys.argv[2].startswith("-f")) or (sys.argv[1].startswith("-f") and sys.argv[2].startswith("-m")):
-            print("-fと-mは同時に指定できません")
-            exit()
-        else:
-            filename = sys.argv[1] if sys.argv[2].startswith("-m") else sys.argv[2]
-            cap = cv2.VideoCapture(filename)
-            color = False
-    elif sys.argv[1].startswith("-f") or sys.argv[2].startswith("-f"):
-        flush = True
-        flushlate = int(sys.argv[1][2:]) if sys.argv[1].startswith("-f") else int(sys.argv[2][2:])
-        filename = sys.argv[2] if sys.argv[1].startswith("-f") else sys.argv[1]
-        cap = cv2.VideoCapture(filename)
-    else:
-        print("引数が正しくありません")
-        exit()
-    try:
-        t = Thread(target=audio_player, args=[VideoFileClip(filename)])
-    except OSError:
-        print("ファイルが開けませんでした。")
-        print("ファイル名が正しいか確認してください。")
-        exit()
-elif len(sys.argv) == 2:
-    if sys.argv[1].startswith("-f"):
-        flush = True
-        flushlate = int(sys.argv[1][2:])
-        cap = cv2.VideoCapture(0)
-    elif sys.argv[1].startswith("-m"):
-        color = False
-        cap = cv2.VideoCapture(0)
-    else:
-        filename = sys.argv[1]
-        cap = cv2.VideoCapture(filename)
-        try:
-            t = Thread(target=audio_player, args=[VideoFileClip(filename)])
-        except OSError:
-            print("ファイルが開けませんでした。")
-            print("ファイル名が正しいか確認してください。")
-            exit()
-elif len(sys.argv) == 1:
-    cap = cv2.VideoCapture(0)
-else:
-    print("引数の数が正しくありません")
-    exit()
-if not cap.isOpened():
-    print("OpenCVの実行に失敗しました。")
-    print("カメラが正しく接続されているか確認してください。")
-    exit()
+parser = argparse.ArgumentParser(description="ビデオプレイヤー on ターミナル")
+parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を指定します。")
+parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
+parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
+parser.add_argument("-l", "--flushlate", help="出力を消去する間隔を指定します。(単位:フレーム)", type = int)
+args = parser.parse_args()
 signal.signal(signal.SIGINT, exitter)
+if not args.filename == None:
+    cap = cv2.VideoCapture(args.filename)
+    try:
+        t = Thread(target=audio_player, args=[VideoFileClip(args.filename)])
+    except OSError:
+        print("ファイルが開けません。ファイル名を確認してください。")
+        exit()
+else:
+    cap = cv2.VideoCapture(args.camnum)
+if not args.flushlate == None:
+    flushlate = args.flushlate
+    flush = True
+color = not args.mono
+if not cap.isOpened():
+    print("OpenCVの実行に失敗しました。カメラが正しく接続されているか確認してください。")
+    exit()
 terminal_size = shutil.get_terminal_size()
 height = terminal_size.lines
 width = terminal_size.columns
