@@ -101,7 +101,6 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             frame_txt.append(text)
         print("\n".join(frame_txt))
         now = time.perf_counter()
-        print(time.perf_counter(), now)
         if (i+1)/fps < now-start:
             skip = True
         else:
@@ -171,10 +170,7 @@ def exitter(hoge, fuga):
     cap.release()
     cv2.destroyAllWindows()
     if color:
-        try:
-            print("\033[0m") #必要かわからないので念のため
-        except RuntimeError:
-            os._exit(0)
+        os.write(1, b"\033[0m")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
 
