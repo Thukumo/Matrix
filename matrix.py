@@ -85,6 +85,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     else:
         start = time.perf_counter()
         i = 0
+        t.setDaemon(True)
         t.start()
         ret, frame = cap.read()
         if show:
@@ -144,7 +145,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                                 oldb = b
                             text += "■"
                         frame_txt += text+"\n"
-                    print(frame_txt+"\033[0m")
+                    print("\n"+frame_txt[::-1].replace("\n", "", 1)[::-1], end="\033[0m\n")
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
                     frame_txt = ""
@@ -170,9 +171,10 @@ def exitter(hoge, fuga):
     cap.release()
     cv2.destroyAllWindows()
     if color:
-        while writing:
-            time.sleep(0.01)
-        print("\033[0m")
+        try:
+            print("\033[0m")
+        except RuntimeError:
+            os._exit(0)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
 
