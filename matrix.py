@@ -14,8 +14,11 @@ if os.name == "nt": #なぜ必要なのかはしらない
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     global filename, start, t, char4im, writing, color, flush
-    if 'WT_SESSION' in os.environ and color:
-        capw = capw*2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
+    capw = capw*2
+    if 'WT_SESSION' in os.environ:
+        char4im.append("■")
+    elif color and os.name == "nt":
+        capw = capw/2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
     if w/capw < h/caph:
         h = int(caph*w/capw)
     else:
@@ -48,6 +51,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
+                oldr = 256
+                oldg = 256
+                oldb = 256
                 if color:
                     writing = True
                     if i%flushlate == 0 and flush:
@@ -56,7 +62,13 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
+                            b, g, r = frame_array[j, k]
+                            if oldr != r or oldg != g or oldb != b:
+                                text += f"\033[38;2;{r};{g};{b}m"
+                                oldr = r
+                                oldg = g
+                                oldb = b
+                            text += "■"
                         frame_txt += text+"\n"
                     print(frame_txt+"\033[0m")
                 else:
@@ -118,10 +130,19 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     if (i+1)%flushlate == 0 and flush:
                         print("\033c", end="")
                     frame_txt = ""
+                    oldr = 256
+                    oldg = 256
+                    oldb = 256
                     for j in range(h):
                         text = ""
                         for k in range(w):
-                            text += f"\033[38;2;{frame_array[j, k, 2]};{frame_array[j, k, 1]};{frame_array[j, k, 0]}m"+"■"
+                            b, g, r = frame_array[j, k]
+                            if oldr != r or oldg != g or oldb != b:
+                                text += f"\033[38;2;{r};{g};{b}m"
+                                oldr = r
+                                oldg = g
+                                oldb = b
+                            text += "■"
                         frame_txt += text+"\n"
                     print(frame_txt+"\033[0m")
                 else:
