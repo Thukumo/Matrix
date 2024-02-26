@@ -13,7 +13,7 @@ if os.name == "nt": #なぜ必要なのかはしらない
     kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
-    global filename, start, t, char4im, writing, color, old_color
+    global filename, start, t, char4im, writing, color, old_color, flush
     capw = capw*2
     if color and os.name == "nt" and not "WT_SESSION" in os.environ:
         capw = capw/2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
@@ -142,6 +142,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     cv2.waitKey(1)
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
+                    if i%flushlate == 0 and flush:
+                        print("\033c", end="")
                     writing = True
                     frame_txt = ""
                     oldr = 256
@@ -206,6 +208,7 @@ parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
 parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
+parser.add_argument("-l", "--late", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
 args = parser.parse_args()
 signal.signal(signal.SIGINT, exitter)
 if not args.filename == None:
@@ -217,6 +220,9 @@ if not args.filename == None:
         exit()
 else:
     cap = cv2.VideoCapture(args.camnum)
+if args.late != None and args.old:
+    flushlate = args.late
+    flush = True
 color = not args.mono
 old_color = args.old
 if not cap.isOpened():
@@ -230,7 +236,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, flushlate, True)
+main(width, height, cap, capw, caph, fps, flushlate, False)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
