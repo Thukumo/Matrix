@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse
+import cv2, time, shutil, signal, os, numpy, sys, argparse, psutil
 from threading import Thread
 from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, moviepy
@@ -143,7 +143,6 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
                     writing = True
-                    frame_txt = ""
                     oldr = 256
                     oldg = 256
                     oldb = 256
@@ -189,7 +188,7 @@ def exitter(hoge, fuga):
         os.write(1, b"\033[2J")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
-
+psutil.Process().nice(psutil.HIGH_PRIORITY_CLASS)
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
