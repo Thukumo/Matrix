@@ -80,7 +80,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     print(frame_txt)
                 time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
                 curtime = time.perf_counter()
-    else:
+    else: #color
         start = time.perf_counter()
         i = 0
         frame_txt = ""
@@ -93,7 +93,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
         if color:
             writing = True
             frame_txt = ""
-            print("\033[{lh}E", end="")
+            #print("\033[{lh}F", end="")
             oldr = 256
             oldg = 256
             oldb = 256
@@ -107,8 +107,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         oldg = g
                         oldb = b
                     text += "■"
-                print("\033[K"+text, end="")
-            lh = h
+                #print("\033[K"+text, end="")
+                print(text)
+            lh = h+1
         else:
             frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
             frame_txt = ""
