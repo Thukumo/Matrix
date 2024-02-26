@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse, psutil
+import cv2, time, shutil, signal, os, numpy, sys, argparse
 from threading import Thread
 from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, moviepy
@@ -13,7 +13,7 @@ if os.name == "nt": #なぜ必要なのかはしらない
     kernel32.SetConsoleMode(handle, MODE)
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
-    global filename, start, t, char4im, writing, color, flush
+    global filename, start, t, char4im, writing, color, old_color
     capw = capw*2
     if color and os.name == "nt" and not "WT_SESSION" in os.environ:
         capw = capw/2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
@@ -128,7 +128,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 continue
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
-            h = terminal_size.lines-1
+            h = terminal_size.lines-1 if 1 < terminal_size.lines else 1
             if w/capw < h/caph:
                 h = int(caph*w/capw)
             else:
@@ -143,10 +143,12 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
                 if color:
                     writing = True
+                    frame_txt = ""
                     oldr = 256
                     oldg = 256
                     oldb = 256
-                    print(f"\033[{lh}F", end="")
+                    if not old_color:
+                        print(f"\033[{lh}F", end="")
                     for j in range(h):
                         text = ""
                         for k in range(w):
@@ -157,7 +159,12 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                                 oldg = g
                                 oldb = b
                             text += "■"
-                        print("\033[K"+text)
+                        if not old_color:
+                            print("\033[K"+text)
+                        else:
+                            frame_txt += text+"\n"
+                    if old_color:
+                        print(frame_txt)
                     lh = h
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
@@ -188,7 +195,6 @@ def exitter(hoge, fuga):
         os.write(1, b"\033[2J")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os._exit(0)
-psutil.Process().nice(psutil.HIGH_PRIORITY_CLASS)
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
@@ -199,6 +205,7 @@ parser = argparse.ArgumentParser(description="ビデオプレイヤー on ター
 parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を指定します。-cオプションを無視します。")
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
+parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
 args = parser.parse_args()
 signal.signal(signal.SIGINT, exitter)
 if not args.filename == None:
@@ -211,6 +218,7 @@ if not args.filename == None:
 else:
     cap = cv2.VideoCapture(args.camnum)
 color = not args.mono
+old_color = args.old
 if not cap.isOpened():
     print("OpenCVの実行に失敗しました。カメラが正しく接続されているか確認してください。")
     exit()
@@ -222,7 +230,7 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, flushlate, False)
+main(width, height, cap, capw, caph, fps, flushlate, True)
 cap.release()
 cv2.destroyAllWindows()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
