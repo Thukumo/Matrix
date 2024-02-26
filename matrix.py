@@ -1,7 +1,7 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse
+import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice
 from threading import Thread
-from moviepy.editor import VideoFileClip
-#めも　numpy, opencv-python, moviepy
+from pydub import AudioSegment
+#めも　numpy, opencv-python, sounddevice, pydub 
 if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
     ENABLE_PROCESSED_OUTPUT = 0x0001
@@ -83,8 +83,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     else: #color
         start = time.perf_counter()
         i = 0
-        frame_txt = ""
         t.start()
+        frame_txt = ""
         ret, frame = cap.read()
         if show:
             cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
@@ -136,7 +136,6 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             ret, frame = cap.read()
             if ret:
                 if show:
-                    #cv2.imshow("frame", cv2.resize(frame, (w, h*2)))
                     bairitu = 3
                     cv2.imshow("frame", cv2.resize(frame, (w*bairitu, h*2*bairitu)))
                     cv2.waitKey(1)
@@ -183,10 +182,13 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 else:
                     time.sleep(max(0, (i+1)/fps-(time.perf_counter()-start)))
 
-def audio_player(clip):
+def audio_player(arr, rate):
     global start
+    #start = time.perf_counter()
+    sounddevice.play(arr[::2], rate)
+    sounddevice.play(arr[1::2], rate)
+    #start = (start+time.perf_counter())/2
     start = time.perf_counter()
-    clip.audio.preview()
 
 def exitter(hoge, fuga):
     global cap, writing, color
@@ -208,19 +210,21 @@ parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
 parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
-parser.add_argument("-l", "--late", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
+parser.add_argument("-r", "--rate", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
 args = parser.parse_args()
 signal.signal(signal.SIGINT, exitter)
-if not args.filename == None:
-    cap = cv2.VideoCapture(args.filename)
+if args.filename != None:
+    filename = args.filename
+    cap = cv2.VideoCapture(filename)
+    audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
     try:
-        t = Thread(target=audio_player, args=[VideoFileClip(args.filename)], daemon=True)
+        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples()), audio.frame_rate], daemon=True)
     except OSError:
         print("ファイルが開けません。ファイル名を確認してください。")
         exit()
 else:
     cap = cv2.VideoCapture(args.camnum)
-if args.late != None and args.old:
+if args.rate != None and args.old:
     flushlate = args.late
     flush = True
 color = not args.mono
@@ -237,7 +241,4 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 main(width, height, cap, capw, caph, fps, flushlate, False)
-cap.release()
-cv2.destroyAllWindows()
-signal.signal(signal.SIGINT, signal.SIG_DFL)
-sys.exit(0)
+exitter(None, None)
