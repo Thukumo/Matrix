@@ -92,9 +92,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
         frame_array = numpy.array(cv2.resize(frame, (w, h)), dtype=numpy.uint8)
         if color:
             writing = True
-            if (i+1)%flushlate == 0 and flush:
-                print("\033c\n"+frame_txt, end="")
             frame_txt = ""
+            print("\033[{lh}E", end="")
             oldr = 256
             oldg = 256
             oldb = 256
@@ -108,8 +107,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         oldg = g
                         oldb = b
                     text += "■"
-                frame_txt += text+"\n"
-            print("\n"+frame_txt[::-1].replace("\n", "", 1)[::-1])
+                print("\033[K"+text, end="")
             lh = h
         else:
             frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
