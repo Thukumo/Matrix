@@ -15,10 +15,7 @@ if os.name == "nt": #なぜ必要なのかはしらない
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     global filename, start, t, char4im, writing, color, flush
     capw = capw*2
-    if 'WT_SESSION' in os.environ:
-        #char4im.append("■")
-        pass
-    elif color and os.name == "nt":
+    if color and os.name == "nt" and not "WT_SESSION" in os.environ:
         capw = capw/2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
     if w/capw < h/caph:
         h = int(caph*w/capw)
