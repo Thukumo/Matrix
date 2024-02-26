@@ -190,7 +190,6 @@ def audio_player(arr, rate):
     sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
     start = time.perf_counter()
     sounddevice.wait()
-    return time.perf_counter()
 def exitter(hoge, fuga):
     global cap, writing, color
     cap.release()
@@ -204,18 +203,6 @@ def exitter(hoge, fuga):
     if args.debug == None or args.debug == 1:
         os._exit(0)
 
-class NewThread(Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
-        Thread.__init__(self, group, target, name, args, kwargs)
-
-    def run(self):
-        if self._target != None:
-            self._return = self._target(*self._args, **self._kwargs)
-
-    def join(self, *args):
-        Thread.join(self, *args)
-        return self._return
-
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
@@ -226,7 +213,8 @@ parser = argparse.ArgumentParser(description="ビデオプレイヤー on ター
 parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を指定します。-cオプションを無視します。")
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
-parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
+#parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
+parser.add_argument("-n", "--new", help="新しい方法でカラー出力を行います。縦ブレは軽減しますが映像がかなり遅れます。", action="store_true")
 parser.add_argument("-r", "--rate", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
 parser.add_argument("-d", "--debug", type = int)
 args = parser.parse_args()
@@ -239,17 +227,19 @@ if args.filename != None:
     #os.system(f"start \"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" \"{filename}\"")
     time.sleep(0.25)
     try:
-        t = NewThread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate])
+        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
     except OSError:
         print("ファイルが開けません。ファイル名を確認してください。")
         exit()
 else:
     cap = cv2.VideoCapture(args.camnum)
-if args.rate != None and args.old:
+#if args.rate != None and args.old:
+if args.rate != None and not args.new:
     flushlate = args.late
     flush = True
 color = not args.mono
-old_color = args.old
+#old_color = args.old
+old_color = not args.new
 if not cap.isOpened():
     print("OpenCVの実行に失敗しました。カメラが正しく接続されているか確認してください。")
     exit()
@@ -271,6 +261,6 @@ if not args.debug == None and args.debug == 2 or args.debug == 3:
         exitter(None, None)
         if not frame == -1:
             print("再生時間", frame/fps, memo, end="秒\n")
-            print("ずれ", memo-t.join()+start, end="秒\n")
+            print("ずれ", frame/fps-memo, end="秒\n")
             if not drop == 0:
                 print("フレームドロップ率", drop/frame*100, end="%\n")
