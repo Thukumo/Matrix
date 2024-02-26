@@ -214,7 +214,7 @@ parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
 #parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
-parser.add_argument("-n", "--new", help="新しい方法でカラー出力を行います。縦ブレは軽減しますが映像がかなり遅れます。", action="store_true")
+parser.add_argument("-n", "--new", help="新しい方法でカラー出力を行います。縦ブレは無くなりますが、動画によっては映像がかなり遅れます。", action="store_true")
 parser.add_argument("-r", "--rate", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
 parser.add_argument("-d", "--debug", type = int)
 args = parser.parse_args()
@@ -224,7 +224,6 @@ if args.filename != None:
     filename = args.filename
     cap = cv2.VideoCapture(filename)
     audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
-    #os.system(f"start \"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" \"{filename}\"")
     time.sleep(0.25)
     try:
         t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
