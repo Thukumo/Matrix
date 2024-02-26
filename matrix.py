@@ -212,7 +212,7 @@ flushlate = 30
 parser = argparse.ArgumentParser(description="ビデオプレイヤー on ターミナル")
 parser.add_argument("-f", "--filename", type=str, help="動画ファイル名を指定します。-cオプションを無視します。")
 parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指定します。既定値0", type=int, default=0)
-parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
+parser.add_argument("-g", "--grayscale", help="モノクロで出力します。", action="store_true")
 #parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
 parser.add_argument("-n", "--new", help="新しい方法でカラー出力を行います。縦ブレは無くなりますが、動画によっては映像がかなり遅れます。", action="store_true")
 parser.add_argument("-r", "--rate", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
@@ -224,7 +224,6 @@ if args.filename != None:
     filename = args.filename
     cap = cv2.VideoCapture(filename)
     audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
-    time.sleep(0.25)
     try:
         t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
     except OSError:
@@ -236,7 +235,7 @@ else:
 if args.rate != None and not args.new:
     flushlate = args.late
     flush = True
-color = not args.mono
+color = not args.grayscale
 #old_color = args.old
 old_color = not args.new
 if not cap.isOpened():
@@ -252,10 +251,14 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 show = False
-if not args.debug == None and args.debug == 1 or args.debug == 3:
+if not args.debug == None:
+    if args.debug == 1 or args.debug == 3:
         show = True
+    elif not args.debug in range(1, 4):
+        print("エラー: 範囲外の値です。")
+        exit()
 drop = main(width, height, cap, capw, caph, fps, flushlate, show)
-if not args.debug == None and args.debug == 2 or args.debug == 3:
+if not args.debug == None and (args.debug == 2 or args.debug == 3):
         memo = time.perf_counter()-start
         exitter(None, None)
         if not frame == -1:
