@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, argparse, sounddevice
+import cv2, time, shutil, signal, os, numpy, argparse, sounddevice, psutil
 from threading import Thread
 from pydub import AudioSegment
 #めも　numpy, opencv-python, sounddevice, pydub
@@ -14,6 +14,7 @@ if os.name == "nt": #なぜ必要なのかはしらない
 
 def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     global filename, start, t, char4im, writing, color, old_color, flush
+    drop = 0
     capw = capw*2
     if color and os.name == "nt" and not "WT_SESSION" in os.environ:
         capw = capw/2 #Windows Terminalは■の縦横比が2:1、cmdは1:1なため
@@ -80,7 +81,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     print(frame_txt)
                 time.sleep(max(0, 1/fps-(time.perf_counter()-curtime)))
                 curtime = time.perf_counter()
-    else: #color
+    else: #movie
         start = time.perf_counter()
         i = 0
         t.start()
@@ -124,6 +125,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
         for i in range(1, int(cap.get(cv2.CAP_PROP_FRAME_COUNT))):
             if skip:
                 skip = False
+                drop += 1
                 cap.read()
                 continue
             terminal_size = shutil.get_terminal_size()
@@ -181,10 +183,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                     skip = True
                 else:
                     time.sleep(max(0, (i+1)/fps-(time.perf_counter()-start)))
-
+    return drop
 def audio_player(arr, rate):
     global start
-    start = time.perf_counter()
     arr = arr/numpy.max(numpy.abs(arr))
     sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
     start = time.perf_counter()
@@ -200,7 +201,8 @@ def exitter(hoge, fuga):
         os.write(1, b"\033[2J")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     os.write(1, b"\n")
-    os._exit(0)
+    if args.debug == None or args.debug == 1:
+        os._exit(0)
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
@@ -213,12 +215,16 @@ parser.add_argument("-c", "--camnum", help="使用するカメラの番号を指
 parser.add_argument("-m", "--mono", help="モノクロで出力します。", action="store_true")
 parser.add_argument("-o", "--old", help="古い方法でカラー出力を行います。音声の再生が安定しますが縦ブレが発生します。", action="store_true")
 parser.add_argument("-r", "--rate", help="出力を消去するレートを指定します。-oオプションがない場合無視されます。単位: フレーム", type=int)
+parser.add_argument("-d", "--debug", type = int)
 args = parser.parse_args()
+psutil.Process().nice(psutil.HIGH_PRIORITY_CLASS)
 signal.signal(signal.SIGINT, exitter)
 if args.filename != None:
     filename = args.filename
     cap = cv2.VideoCapture(filename)
     audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
+    #os.system(f"start \"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" \"{filename}\"")
+    time.sleep(0.25)
     try:
         t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
     except OSError:
@@ -242,5 +248,14 @@ cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-main(width, height, cap, capw, caph, fps, flushlate, False)
-exitter(None, None)
+show = False
+if not args.debug == None and args.debug == 1 or args.debug == 3:
+        show = True
+drop = main(width, height, cap, capw, caph, fps, flushlate, show)
+if not args.debug == None and args.debug == 2 or args.debug == 3:
+        frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        memo = (time.perf_counter()-start)/60
+        exitter(None, None)
+        print(memo, end="分\n")
+        if not frame == -1 and drop != 0:
+            print(drop/frame*100, end="%\n")
