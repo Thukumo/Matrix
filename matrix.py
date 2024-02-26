@@ -190,7 +190,7 @@ def audio_player(arr, rate):
     sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
     start = time.perf_counter()
     sounddevice.wait()
-
+    return time.perf_counter()
 def exitter(hoge, fuga):
     global cap, writing, color
     cap.release()
@@ -203,6 +203,19 @@ def exitter(hoge, fuga):
     os.write(1, b"\n")
     if args.debug == None or args.debug == 1:
         os._exit(0)
+
+class NewThread(Thread):
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
+        Thread.__init__(self, group, target, name, args, kwargs)
+
+    def run(self):
+        if self._target != None:
+            self._return = self._target(*self._args, **self._kwargs)
+
+    def join(self, *args):
+        Thread.join(self, *args)
+        return self._return
+
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
 writing = False
@@ -226,7 +239,7 @@ if args.filename != None:
     #os.system(f"start \"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" \"{filename}\"")
     time.sleep(0.25)
     try:
-        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
+        t = NewThread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate])
     except OSError:
         print("ファイルが開けません。ファイル名を確認してください。")
         exit()
@@ -244,6 +257,7 @@ terminal_size = shutil.get_terminal_size()
 height = terminal_size.lines-1
 width = terminal_size.columns
 fps = cap.get(cv2.CAP_PROP_FPS)
+frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -253,9 +267,10 @@ if not args.debug == None and args.debug == 1 or args.debug == 3:
         show = True
 drop = main(width, height, cap, capw, caph, fps, flushlate, show)
 if not args.debug == None and args.debug == 2 or args.debug == 3:
-        frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        memo = (time.perf_counter()-start)/60
+        memo = time.perf_counter()-start
         exitter(None, None)
-        print(memo, end="分\n")
-        if not frame == -1 and drop != 0:
-            print(drop/frame*100, end="%\n")
+        if not frame == -1:
+            print("再生時間", frame/fps, memo, end="秒\n")
+            print("ずれ", memo-t.join()+start, end="秒\n")
+            if not drop == 0:
+                print("フレームドロップ率", drop/frame*100, end="%\n")
