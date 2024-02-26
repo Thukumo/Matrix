@@ -191,7 +191,6 @@ def audio_player(arr, rate):
     start = time.perf_counter()
     sounddevice.wait()
 def exitter(hoge, fuga):
-    global cap, writing, color
     cap.release()
     sounddevice.stop()
     cv2.destroyAllWindows()
@@ -262,8 +261,6 @@ if not args.debug == None and (args.debug == 2 or args.debug == 3):
         memo = time.perf_counter()-start
         exitter(None, None)
         if not frame == -1:
-            if color:
-                os.write(1, b"\033[0m")
             print("再生時間", frame/fps, memo, end="秒\n")
             print("ずれ", frame/fps-memo, end="秒\n")
             if not drop == 0:
