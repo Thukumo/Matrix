@@ -1,7 +1,7 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice
+import cv2, time, shutil, signal, os, numpy, argparse, sounddevice
 from threading import Thread
 from pydub import AudioSegment
-#めも　numpy, opencv-python, sounddevice, pydub 
+#めも　numpy, opencv-python, sounddevice, pydub
 if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
     ENABLE_PROCESSED_OUTPUT = 0x0001
@@ -185,9 +185,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
 def audio_player(arr, rate):
     global start
     start = time.perf_counter()
-    arr = arr/numpy.abs(arr).max()
+    arr = arr/numpy.max(numpy.abs(arr))
     sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
-    start = (start+time.perf_counter())/2
+    start = time.perf_counter()
     sounddevice.wait()
 
 def exitter(hoge, fuga):
@@ -199,6 +199,7 @@ def exitter(hoge, fuga):
         os.write(1, b"\033[0m")
         os.write(1, b"\033[2J")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+    print()
     os._exit(0)
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
@@ -219,7 +220,7 @@ if args.filename != None:
     cap = cv2.VideoCapture(filename)
     audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
     try:
-        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples()), audio.frame_rate], daemon=True)
+        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
     except OSError:
         print("ファイルが開けません。ファイル名を確認してください。")
         exit()
