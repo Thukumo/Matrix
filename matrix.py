@@ -38,7 +38,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             i += 1
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
-            h = terminal_size.lines
+            h = terminal_size.lines-1
             if w/capw < h/caph:
                 h = int(caph*w/capw)
             else:
@@ -93,7 +93,6 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
         if color:
             writing = True
             frame_txt = ""
-            #print("\033[{lh}F", end="")
             oldr = 256
             oldg = 256
             oldb = 256
@@ -107,9 +106,8 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         oldg = g
                         oldb = b
                     text += "■"
-                #print("\033[K"+text, end="")
                 print(text)
-            lh = h+1
+            lh = h
         else:
             frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
             frame_txt = ""
@@ -130,7 +128,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                 continue
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
-            h = terminal_size.lines
+            h = terminal_size.lines-1
             if w/capw < h/caph:
                 h = int(caph*w/capw)
             else:
@@ -218,7 +216,7 @@ if not cap.isOpened():
     print("OpenCVの実行に失敗しました。カメラが正しく接続されているか確認してください。")
     exit()
 terminal_size = shutil.get_terminal_size()
-height = terminal_size.lines
+height = terminal_size.lines-1
 width = terminal_size.columns
 fps = cap.get(cv2.CAP_PROP_FPS)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
