@@ -199,7 +199,7 @@ def exitter(hoge, fuga):
         os.write(1, b"\033[0m")
         os.write(1, b"\033[2J")
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    print()
+    os.write(1, b"\n")
     os._exit(0)
 char4im = [" ", ".", "-", "\"", ":", "+", "|", "*", "#" ,"%", "&", "@"] #ダダダダ天使の見栄え的にひとまずこれで
 #char4im = [" ", ".", "\'", "-", ":", "+", "|", "*", "$", "#", "%", "&", "@"]
