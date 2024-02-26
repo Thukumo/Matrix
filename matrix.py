@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice, simpleaudio, pyaudio
+import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice
 from threading import Thread
 from pydub import AudioSegment
 #めも　numpy, opencv-python, sounddevice, pydub 
@@ -193,6 +193,7 @@ def audio_player(arr, rate):
 def exitter(hoge, fuga):
     global cap, writing, color
     cap.release()
+    sounddevice.stop()
     cv2.destroyAllWindows()
     if color:
         os.write(1, b"\033[0m")
