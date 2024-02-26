@@ -1,4 +1,4 @@
-import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice
+import cv2, time, shutil, signal, os, numpy, sys, argparse, sounddevice, simpleaudio, pyaudio
 from threading import Thread
 from pydub import AudioSegment
 #めも　numpy, opencv-python, sounddevice, pydub 
@@ -184,11 +184,11 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
 
 def audio_player(arr, rate):
     global start
-    #start = time.perf_counter()
-    sounddevice.play(arr[::2], rate)
-    sounddevice.play(arr[1::2], rate)
-    #start = (start+time.perf_counter())/2
     start = time.perf_counter()
+    arr = arr/numpy.abs(arr).max()
+    sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
+    start = (start+time.perf_counter())/2
+    sounddevice.wait()
 
 def exitter(hoge, fuga):
     global cap, writing, color
