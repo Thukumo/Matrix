@@ -226,7 +226,7 @@ if args.filename != None:
         if os.path.splitext(filename)[1][1:]  not in ["mp4", "webm"]:
             print()
             print(f"moviepyはこのファイル形式({os.path.splitext(filename)[1][1:]})に対応していない可能性があります。")
-            print("そのため、音声が再生されない可能性があります。")
+            print("そのため、音声が再生されないかもしれません。")
             time.sleep(2)
         time.sleep(1)
         from moviepy.editor import VideoFileClip
