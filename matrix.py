@@ -1,7 +1,7 @@
 import cv2, time, shutil, signal, os, numpy, argparse, sounddevice, psutil
 from threading import Thread
-from pydub import AudioSegment
-#めも　numpy, opencv-python, sounddevice, pydub
+from moviepy.editor import VideoFileClip
+#めも　numpy, opencv-python, sounddevice, moviepy
 if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
     ENABLE_PROCESSED_OUTPUT = 0x0001
@@ -168,6 +168,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                             frame_txt += text+"\n"
                     if old_color:
                         print(frame_txt)
+                    writing = False
                     lh = h
                 else:
                     frame_array = 0.299 * frame_array[:, :, 2] + 0.587 * frame_array[:, :, 1] + 0.114 * frame_array[:, :, 0]
@@ -177,7 +178,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
                         for k in range(w):
                             text += char4im[int(frame_array[j, k]*(len(char4im))/256)] #frame_array[j, k]の値は255がMAX
                         frame_txt += text+"\n"
-                    os.write(1, ("\n"+frame_txt).encode())
+                    os.write(1, (frame_txt+"\n\n").encode())
                 writing = False
                 if (i+1)/fps < time.perf_counter()-start:
                     skip = True
@@ -186,8 +187,7 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
     return drop
 def audio_player(arr, rate):
     global start
-    arr = arr/numpy.max(numpy.abs(arr))
-    sounddevice.play(numpy.append(arr[::2], arr[1::2]).reshape(-1, 2), rate/2)
+    sounddevice.play(arr, rate, loop=False)
     start = time.perf_counter()
     sounddevice.wait()
 def exitter(hoge, fuga):
@@ -222,9 +222,9 @@ signal.signal(signal.SIGINT, exitter)
 if args.filename != None:
     filename = args.filename
     cap = cv2.VideoCapture(filename)
-    audio = AudioSegment.from_file(filename, os.path.splitext(filename)[1][1:])
+    audio = VideoFileClip(filename).audio
     try:
-        t = Thread(target=audio_player, args=[numpy.array(audio.get_array_of_samples(), dtype=numpy.int32), audio.frame_rate], daemon=True)
+        t = Thread(target=audio_player, args=[audio.to_soundarray(fps=audio.fps), audio.fps], daemon=True)
     except OSError:
         print("ファイルが開けません。ファイル名を確認してください。")
         exit()
@@ -262,6 +262,6 @@ if not args.debug == None and (args.debug == 2 or args.debug == 3):
         exitter(None, None)
         if not frame == -1:
             print("再生時間", frame/fps, memo, end="秒\n")
-            print("ずれ", frame/fps-memo, end="秒\n")
+            print("ずれ", memo-frame/fps, end="秒\n")
             if not drop == 0:
                 print("フレームドロップ率", drop/frame*100, end="%\n")
