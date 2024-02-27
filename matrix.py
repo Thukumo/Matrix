@@ -1,6 +1,5 @@
-import cv2, time, shutil, signal, os, numpy, argparse, sounddevice, psutil
+import cv2, time, shutil, signal, os, numpy, argparse, sounddevice, psutil, subprocess
 from threading import Thread
-from moviepy.editor import VideoFileClip
 #めも　numpy, opencv-python, sounddevice, moviepy
 if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
@@ -222,12 +221,17 @@ signal.signal(signal.SIGINT, exitter)
 if args.filename != None:
     filename = args.filename
     cap = cv2.VideoCapture(filename)
-    audio = VideoFileClip(filename).audio
-    try:
-        t = Thread(target=audio_player, args=[audio.to_soundarray(fps=audio.fps), audio.fps], daemon=True)
-    except OSError:
-        print("ファイルが開けません。ファイル名を確認してください。")
-        exit()
+    if shutil.which("ffmpeg") == None or shutil.which("ffprobe") == None:
+        print("ffmpeg, ffproveがインストールされていないためmoviepyを使用します。")
+        from moviepy.editor import VideoFileClip
+        try:
+            audio = VideoFileClip(filename).audio
+            t = Thread(target=audio_player, args=[audio.to_soundarray(fps=audio.fps), audio.fps], daemon=True)
+        except OSError:
+            print("ファイルが開けません。ファイル名を確認してください。")
+            exit()
+    else:
+        t = t = Thread(target=audio_player, args=[numpy.frombuffer(subprocess.Popen(["ffmpeg", "-i", filename, "-f", "wav", "-"], stdout=subprocess.PIPE).stdout.read(), dtype=numpy.int16), int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate", "-of", "default=noprint_wrappers=1:nokey=1", filename], capture_output=True, text=True).stdout)*2], daemon=True)
 else:
     cap = cv2.VideoCapture(args.camnum)
 #if args.rate != None and args.old:
