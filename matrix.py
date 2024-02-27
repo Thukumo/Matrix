@@ -223,6 +223,12 @@ if args.filename != None:
     cap = cv2.VideoCapture(filename)
     if shutil.which("ffmpeg") == None or shutil.which("ffprobe") == None:
         print("ffmpeg, ffproveがインストールされていないためmoviepyを使用します。")
+        if os.path.splitext(filename)[1][1:]  not in ["mp4", "webm"]:
+            print()
+            print(f"moviepyはこのファイル形式({os.path.splitext(filename)[1][1:]})に対応していない可能性があります。")
+            print("そのため、音声が再生されない可能性があります。")
+            time.sleep(2)
+        time.sleep(1)
         from moviepy.editor import VideoFileClip
         try:
             audio = VideoFileClip(filename).audio
@@ -245,8 +251,6 @@ if not cap.isOpened():
     print("OpenCVの実行に失敗しました。カメラが正しく接続されているか確認してください。")
     exit()
 terminal_size = shutil.get_terminal_size()
-height = terminal_size.lines-1
-width = terminal_size.columns
 fps = cap.get(cv2.CAP_PROP_FPS)
 frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
@@ -260,7 +264,7 @@ if not args.debug == None:
     elif not args.debug in range(1, 4):
         print("エラー: 範囲外の値です。")
         exit()
-drop = main(width, height, cap, capw, caph, fps, flushlate, show)
+drop = main(terminal_size.columns, terminal_size.lines-1, cap, capw, caph, fps, flushlate, show)
 if not args.debug == None and (args.debug == 2 or args.debug == 3):
         memo = time.perf_counter()-start
         exitter(None, None)
