@@ -32,8 +32,7 @@ mp4とwebmは再生できました。
 ・(-nオプション無しでも)一部の動画を再生すると映像が音声から遅れていく<br>
 　　同じ動画をwebmからmp4に変換したものでも発生します。<br>
   　　解像度が高いからかもしれません。<br>
+      カラー出力を行ったときのみ発生するようです。<br>
     条件が謎すぎるため対応予定はありません。原因に気づけたら直します。<br>
-・音がなんかおかしい気がする<br>
-    最近のコミットで、moviepyがコード変えてないのにエラー吐くようになったのでAudioSegment+sounddeviceに切り替えていました。<br>
-    AudioSegment.from_file()かAudioSegment.get_array_of_samples()の動作がおかしいようなので一部moviepyを使う方法に変更したところ直りました。<br>
-    ~~あんまりmoviepy好きじゃないんですけどね~~
+~~・音がなんかおかしい気がする~~<br>
+    AudioSegment.from_file()かAudioSegment.get_array_of_samples()の動作がおかしいようなので別のライブラリを使用するように変更して修正しました。<br>
