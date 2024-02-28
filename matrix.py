@@ -1,6 +1,6 @@
 import cv2, time, shutil, signal, os, numpy, argparse, sounddevice, psutil, subprocess
 from threading import Thread
-#めも　numpy, opencv-python, sounddevice, moviepy
+#めも　numpy, opencv-python, sounddevice, moviepy, pydub
 if os.name == "nt": #なぜ必要なのかはしらない
     import ctypes
     ENABLE_PROCESSED_OUTPUT = 0x0001
@@ -125,7 +125,9 @@ def main(w, h, cap, capw, caph, fps, flushlate, show=False):
             if skip:
                 skip = False
                 drop += 1
-                cap.read()
+                ret = cap.read()
+                while not ret:
+                    ret = cap.read()
                 continue
             terminal_size = shutil.get_terminal_size()
             w = terminal_size.columns
@@ -240,6 +242,8 @@ if args.filename != None:
         t = t = Thread(target=audio_player, args=[numpy.frombuffer(subprocess.Popen(["ffmpeg", "-i", filename, "-f", "wav", "-"], stdout=subprocess.PIPE).stdout.read(), dtype=numpy.int16), int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate", "-of", "default=noprint_wrappers=1:nokey=1", filename], capture_output=True, text=True).stdout)*2], daemon=True)
 else:
     cap = cv2.VideoCapture(args.camnum)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 #if args.rate != None and args.old:
 if args.rate != None and not args.new:
     flushlate = args.late
@@ -253,8 +257,6 @@ if not cap.isOpened():
 terminal_size = shutil.get_terminal_size()
 fps = cap.get(cv2.CAP_PROP_FPS)
 frame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 capw = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 caph = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 show = False
