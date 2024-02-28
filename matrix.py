@@ -225,7 +225,7 @@ if args.filename != None:
     cap = cv2.VideoCapture(filename)
     if shutil.which("ffmpeg") == None or shutil.which("ffprobe") == None:
         print("ffmpeg, ffproveがインストールされていないためmoviepyを使用します。")
-        if os.path.splitext(filename)[1][1:]  not in ["mp4", "webm"]:
+        if os.path.splitext(filename)[1][1:] not in ["mp4", "webm"]:
             print()
             print(f"moviepyはこのファイル形式({os.path.splitext(filename)[1][1:]})に対応していない可能性があります。")
             print("そのため、音声が再生されないかもしれません。")
@@ -239,7 +239,7 @@ if args.filename != None:
             print("ファイルが開けません。ファイル名を確認してください。")
             exit()
     else:
-        t = t = Thread(target=audio_player, args=[numpy.frombuffer(subprocess.Popen(["ffmpeg", "-i", filename, "-f", "wav", "-"], stdout=subprocess.PIPE).stdout.read(), dtype=numpy.int16), int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate", "-of", "default=noprint_wrappers=1:nokey=1", filename], capture_output=True, text=True).stdout)*2], daemon=True)
+        t = Thread(target=audio_player, args=[numpy.frombuffer(subprocess.Popen(["ffmpeg", "-i", filename, "-f", "wav", "-"], stdout=subprocess.PIPE).stdout.read(), dtype=numpy.int16), int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate", "-of", "default=noprint_wrappers=1:nokey=1", filename], capture_output=True, text=True).stdout)*2], daemon=True)
 else:
     cap = cv2.VideoCapture(args.camnum)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
