@@ -35,7 +35,7 @@ mp4とwebmは再生できました。
       カラー出力を行ったときのみ発生するようです。<br>
       上の不具合と同じバグな気がします。
     条件が謎すぎるため対応予定はありません。原因に気づけたら直します。<br>~~
-      [C#で書き直したもの](https://github.com/Thukumo/matrixCSharp)でも同じ問題が起きているのでロジックかOpenCVが悪いのだと思います。<\br>
+      [C#で書き直したもの](https://github.com/Thukumo/matrixCSharp)でも同じ問題が起きているのでロジックかOpenCVが悪いのだと思います。</br>
 ~~・音がなんかおかしい気がする~~<br>
     AudioSegment.from_file()かAudioSegment.get_array_of_samples()の動作がおかしいようなので別のライブラリを使用するように変更して修正しました。<br>
 # 今後の予定
